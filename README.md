@@ -31,6 +31,6 @@ https://www.gankeapp.com/mole_data/mole_clothes
 摩尔庄园助手🤪，依赖上述天气和密令接口，每日推送天气和最新密令。(20210630)
 
 效果图：
-![image](https://github.com/lmj731/ganke-mole/img/01.png)
-![image](https://github.com/lmj731/ganke-mole/img/02.png)
+![image](https://github.com/lmj731/ganke-mole/blob/main/img/01.png)
+![image](https://github.com/lmj731/ganke-mole/blob/main/img/02.png)
 >ps:首次运行会推送所有密令，建立历史记录后，后面就只推送新增的密令了！
