@@ -1,5 +1,6 @@
-# 20210630
+# 20210702
 import json
+from json import encoder
 import time
 import requests
 
@@ -105,12 +106,12 @@ def check_new():
     rain_list = []
     try:
         if req_dict['lastTime'] != weather['lastTime']:
-            with open('weather.json', 'w') as f:
-                json.dump(req_dict, f)
+            with open('weather.json', 'w', encoding='utf-8') as f:
+                json.dump(req_dict, f, ensure_ascii=False)
                 _rain = True
     except:
-        with open('weather.json', 'w') as f:
-            json.dump(req_dict, f)
+        with open('weather.json', 'w', encoding='utf-8') as f:
+            json.dump(req_dict, f, ensure_ascii=False)
             _rain = True
 
     # 记录雨天
@@ -142,16 +143,17 @@ def check_new():
     # 记录新增密令
     url = 'https://www.gankeapp.com/common_data/molegift'
     req = requests.get(url, headers=headers, timeout=10)
+    req.encoding = 'utf-8'
     req_dict = json.loads(req.text)
     _gift = False
     try:
         if req_dict['lastTime'] != gift['lastTime']:
-            with open('gift.json', 'w') as f:
-                json.dump(req_dict, f)
+            with open('gift.json', 'w', encoding='utf-8') as f:
+                json.dump(req_dict, f, ensure_ascii=False)
                 _gift = True
     except:
-        with open('gift.json', 'w') as f:
-            json.dump(req_dict, f)
+        with open('gift.json', 'w', encoding='utf-8') as f:
+            json.dump(req_dict, f, ensure_ascii=False)
             _gift = True
 
     new_gift_list = []
@@ -162,15 +164,26 @@ def check_new():
     req_dict['data'].pop(0)
     req_dict['data'].pop(0)
     for gift_lists in req_dict['data']:
-        gift_data = gift_lists[-3]
-        gift_lists.pop()
-        gift_lists.pop()
-        gift_lists.pop()
+        gift_data = gift_lists[0]
+        gift_key = gift_lists[1]
         gifts = ''
-        for i in gift_lists:
+        if '，' in gift_data:
+            for i in gift_data.split('，'):
+                if "&gt;" in i:
+                    i = i.split("&gt;", 1)[1].rsplit("&lt;", 1)[0]
+                gifts = gifts + i + ' '
+        elif '、' in gift_data:
+            for i in gift_data.split('、'):
+                if "&gt;" in i:
+                    i = i.split("&gt;", 1)[1].rsplit("&lt;", 1)[0]
+                gifts = gifts + i + ' '
+        else:
+            i = gift_data
+            if "&gt;" in i:
+                i = i.split("&gt;", 1)[1].rsplit("&lt;", 1)[0]
             gifts = gifts + i + ' '
 
-        gift_list.append(gift_data+' ({})'.format(gifts[:-1]))
+        gift_list.append(gift_key+' ({})'.format(gifts[:-1]))
 
     gift_list.reverse()
     if not old_gift_list:
@@ -186,8 +199,8 @@ def check_new():
                 break
 
     old_gift_list = gift_list
-    with open('history.json', 'w') as f:
-        json.dump(old_gift_list, f)
+    with open('history.json', 'w', encoding='utf-8') as f:
+        json.dump(old_gift_list, f, ensure_ascii=False)
 
     return
 
