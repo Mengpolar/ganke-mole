@@ -4,7 +4,7 @@ from json import encoder
 import time
 import requests
 
-config = {}
+# config = {}
 gift = []
 weather = []
 rain_list = []
@@ -58,16 +58,6 @@ def log(status, log_data):
 
     return
 
-# 读取配置文件 config.json
-def get_config():
-    try:
-        with open('config.json', 'r') as f:
-            config = json.load(f)
-    except:
-        config = {}
-
-    return config
-
 
 # 读取密令历史记录 gift.json
 def get_gift():
@@ -102,43 +92,46 @@ def check_new():
     url = 'https://www.gankeapp.com/common_data/mole_weather'
     req = requests.get(url, headers=headers, timeout=10)
     req_dict = json.loads(req.text)
-    _rain = False
+    # _rain = False
     rain_list = []
+
+    # 覆盖为最新天气
     try:
         if req_dict['lastTime'] != weather['lastTime']:
             with open('weather.json', 'w', encoding='utf-8') as f:
                 json.dump(req_dict, f, ensure_ascii=False)
-                _rain = True
+                # _rain = True
     except:
         with open('weather.json', 'w', encoding='utf-8') as f:
             json.dump(req_dict, f, ensure_ascii=False)
-            _rain = True
+            # _rain = True
 
     # 记录雨天
-    if _rain:
-        rain_week = 1
-        for weather_list in req_dict['data']:
-            if not isinstance(weather_list[0], int):
-                continue
-            rain_hour = 0
-            rain_hour_list = []
-            for i in weather_list:
-                if i == "下雨":
-                    rain_hour_list.append(rain_hour)
-                rain_hour += 1
+    # 20210816 将雨天只推送一次修改为每天推送
+    # if _rain:
+    rain_week = 1
+    for weather_list in req_dict['data']:
+        if not isinstance(weather_list[0], int):
+            continue
+        rain_hour = 0
+        rain_hour_list = []
+        for i in weather_list:
+            if i == "下雨":
+                rain_hour_list.append(rain_hour)
+            rain_hour += 1
 
-            rain_data = ''
-            for i in rain_hour_list:
-                rain_data = rain_data + hour_dict[i] + ' '
-            if rain_data:
-                time_data = rain_data[:-1]
-                # rain_data[:-1] 08:00-12:00 16:00-20:00 20:00-00:00
-                for merge_time in merge_list:
-                    if merge_time in time_data:
-                        time_data = time_data.replace(merge_time, "-")
-                rain_list.append(week_dict[rain_week] + "({})".format(time_data))
-                log(True, week_dict[rain_week] + "({})".format(time_data))
-            rain_week += 1
+        rain_data = ''
+        for i in rain_hour_list:
+            rain_data = rain_data + hour_dict[i] + ' '
+        if rain_data:
+            time_data = rain_data[:-1]
+            # rain_data[:-1] 08:00-12:00 16:00-20:00 20:00-00:00
+            for merge_time in merge_list:
+                if merge_time in time_data:
+                    time_data = time_data.replace(merge_time, "-")
+            rain_list.append(week_dict[rain_week] + "({})".format(time_data))
+            log(True, week_dict[rain_week] + "({})".format(time_data))
+        rain_week += 1
 
     # 记录新增密令
     url = 'https://www.gankeapp.com/common_data/molegift'
@@ -157,7 +150,8 @@ def check_new():
             _gift = True
 
     new_gift_list = []
-    # 未更新
+
+    # 没有新的密令
     if not _gift:
         return
 
@@ -205,50 +199,66 @@ def check_new():
     return
 
 
-# 发送推送信息
-def send_msg(send_key):
+# 发送推送信息-企业微信接口
+def send_msg():
     global rain_list, new_gift_list
     today = time.strftime("%Y%m%d", (time.localtime()))
+    access_token = get_access_token()
 
-    desp = "下雨天：\n\n"
+    desp = "摩尔庄园助手({})\n".format(today)
+    desp = desp + "下雨天：\n"
     for i in rain_list:
-        desp = desp + "- " + i + "\n\n"
-    desp = desp + "新增密令：\n\n"
+        desp = desp + "- " + i + "\n"
+    desp = desp + "新增密令：\n"
     for i in new_gift_list:
-        desp = desp + "- " + i + "\n\n"
+        desp = desp + "- " + i + "\n"
 
-    payload = {
-        "text": "摩尔庄园助手({})".format(today),
-        "desp": desp
+    raw = {
+        "touser" : "@all",
+        "msgtype" : "text",
+        "agentid" : 1000002,
+        "text" : {
+            "content" : desp
+        }
     }
-
-    url = 'https://sc.ftqq.com/%s.send'%(send_key)
-    req = requests.get(url, timeout=10, params=payload)
-    req_dict = json.loads(req.text)
-    if req_dict['errno'] == 0:
-        log(True, '消息推送成功')
-        return
-
-    log(False, '消息推送失败')
+    data = json.dumps(raw)
+    url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={}".format(access_token)
+    requests.post(url, data=data, timeout=10)
 
     return
 
 
-while True:
-    config = get_config()
+def get_access_token():
+    access_token = ''
+    # corpid 填入 企业ID 参考：https://work.weixin.qq.com/api/doc/90000/90135/90665#corpid
+    # corpsecret 填入 应用的凭证密钥 参考：https://work.weixin.qq.com/api/doc/90000/90135/90665#secret
+    url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=123456&corpsecret=abcde"
+    req = requests.get(url, timeout=10)
+    req_dict = json.loads(req.text)
+    if req_dict['errmsg'] != "ok":
+        return access_token
+    
+    access_token = req_dict['access_token']
 
+    return access_token
+
+
+while True:
     # 晚上23-早上9 不运行(免打扰)
     hour = int(time.strftime("%H", (time.localtime())))
     if hour>=23 or hour<9:
-        time.sleep(3600) # 休眠1小时
+        time.sleep(600) # 休眠10分钟
         continue
 
+    # 取消了配置文件 20210826
     # 查看是否存在配置文件
-    if not config:
-        time.sleep(60) # 休眠1分钟
-        continue
+    # if not config:
+    #     time.sleep(60) # 休眠1分钟
+    #     continue
 
+    # 获取今日日期
     today = time.strftime("%Y%m%d", (time.localtime()))
+    # 获取今日日志
     today_log = ''
     try:
         with open('log/'+today, 'r') as f:
@@ -275,8 +285,7 @@ while True:
     # 校验更新
     check_new()
 
-    # 推送 server酱
-    if config['SCKEY']:
-        send_msg(config['SCKEY'])
+    # 推送信息
+    send_msg()
 
     time.sleep(600) # 休眠10分钟

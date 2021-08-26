@@ -30,7 +30,8 @@ https://www.gankeapp.com/mole_data/mole_clothes
 ## mole_helper
 摩尔庄园助手🤪，依赖上述天气和密令接口，每日推送天气和最新密令。(20210702)
 
+- 将推送方式修改为 企业微信接口，可在微信中查看信息；天气推送修改为每日推送。(20210826)
+
 效果图：
-![image](https://cdn.jsdelivr.net/gh/lmj731/ganke-mole@master/img/01.png)
-![image](https://cdn.jsdelivr.net/gh/lmj731/ganke-mole@master/img/02.jpg)
+![image](https://cdn.jsdelivr.net/gh/lmj731/ganke-mole@master/img/01.jpg)
 >ps:首次运行会推送所有密令，建立历史记录后，后面就只推送新增的密令了！
