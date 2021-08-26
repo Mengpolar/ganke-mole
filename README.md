@@ -35,3 +35,6 @@ https://www.gankeapp.com/mole_data/mole_clothes
 效果图：
 ![image](https://cdn.jsdelivr.net/gh/lmj731/ganke-mole@master/img/01.jpg)
 >ps:首次运行会推送所有密令，建立历史记录后，后面就只推送新增的密令了！
+
+## 声明
+本代码仅用于学习，切勿用于其他任何用途，下载、使用、复制本库所导致的后果，由使用人自行承担，如不同意，请立即停用并删除脚本，否则视为认可以上条件。
